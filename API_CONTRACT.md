@@ -1,0 +1,1 @@
+/Users/jao/Documents/Projetos/lorekeeper-backend/API_CONTRACT.md
