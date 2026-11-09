@@ -91,7 +91,12 @@ export interface ItemResponse {
   dropped_by: MinimalResource[];
 }
 
-// Auth & Standard Payloads conforme API_CONTRACT.md
+// Health Check & Auth & Standard Payloads conforme API_CONTRACT.md
+export interface HealthCheckResponse {
+  status: string;
+  world: string;
+}
+
 export interface LoginRequest {
   username: string;
   password: string;
