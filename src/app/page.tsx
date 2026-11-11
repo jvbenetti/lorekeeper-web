@@ -5,11 +5,15 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { lorekeeperApi } from '@/lib/api';
 import ImageUploader from '@/components/ImageUploader';
+import MonsterStatsForm from '@/components/MonsterStatsForm';
+import ItemPropertiesForm from '@/components/ItemPropertiesForm';
 import type {
   MinimalResource,
   EntityType,
   LocationType,
   ItemType,
+  MonsterStats,
+  ItemProperties,
   HealthCheckResponse,
 } from '@/types/api';
 
@@ -51,6 +55,19 @@ const LOCATION_TYPES: LocationType[] = [
 ];
 const ITEM_TYPES: ItemType[] = ['WEAPON', 'ARMOR', 'ARTIFACT', 'POTION'];
 
+const DEFAULT_MONSTER_STATS: MonsterStats = {
+  attributes: {
+    STR: 10,
+    DEX: 10,
+    CON: 10,
+    INT: 10,
+    WIS: 10,
+    CHA: 10,
+  },
+  actions: [],
+  legendary_actions: [],
+};
+
 export default function CodexHomePage() {
   const { isAdmin, login, logout, setTokenManually } = useAuth();
 
@@ -76,20 +93,17 @@ export default function CodexHomePage() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
 
-  // Estado do Rascunho Rápido (FAB: POST /entities, /locations, /items)
+  // Estado do Modal de Criação (FAB: POST /entities, /locations, /items)
   const [draftCategory, setDraftCategory] = useState<CodexTab>('entities');
   const [draftName, setDraftName] = useState('');
   const [draftType, setDraftType] = useState<string>('MONSTER');
   const [draftLore, setDraftLore] = useState('');
   const [draftImageUrl, setDraftImageUrl] = useState('');
-  // Campos extras por tipo de recurso no modal de criação
   const [draftParentId, setDraftParentId] = useState<string>('');
-  const [draftAc, setDraftAc] = useState<string>('');
-  const [draftHp, setDraftHp] = useState<string>('');
-  const [draftCr, setDraftCr] = useState<string>('');
-  const [draftRarity, setDraftRarity] = useState<string>('');
-  const [draftDamage, setDraftDamage] = useState<string>('');
-  const [draftWeight, setDraftWeight] = useState<string>('');
+  const [draftStats, setDraftStats] = useState<MonsterStats>(
+    DEFAULT_MONSTER_STATS
+  );
+  const [draftItemProps, setDraftItemProps] = useState<ItemProperties>({});
   const [draftFeedback, setDraftFeedback] = useState<string | null>(null);
   const [isSubmittingDraft, setIsSubmittingDraft] = useState(false);
 
@@ -166,12 +180,8 @@ export default function CodexHomePage() {
     setDraftLore('');
     setDraftImageUrl('');
     setDraftParentId('');
-    setDraftAc('');
-    setDraftHp('');
-    setDraftCr('');
-    setDraftRarity('');
-    setDraftDamage('');
-    setDraftWeight('');
+    setDraftStats(DEFAULT_MONSTER_STATS);
+    setDraftItemProps({});
     setDraftFeedback(null);
     setIsDraftModalOpen(true);
   };
@@ -216,11 +226,7 @@ export default function CodexHomePage() {
           lore: draftLore.trim() || 'Rascunho registrado em sessão.',
           image_url:
             draftImageUrl || 'https://cdn.lamuria.rpg/placeholder.jpg',
-          stats: {
-            armor_class: draftAc ? Number(draftAc) : undefined,
-            hit_points: draftHp || undefined,
-            challenge_rating: draftCr || undefined,
-          },
+          stats: draftStats,
         });
       } else if (draftCategory === 'locations') {
         await lorekeeperApi.createLocation({
@@ -238,11 +244,7 @@ export default function CodexHomePage() {
           lore: draftLore.trim() || 'Artefato catalogado pelo Mestre.',
           image_url:
             draftImageUrl || 'https://cdn.lamuria.rpg/placeholder.jpg',
-          properties: {
-            rarity: draftRarity || undefined,
-            damage: draftDamage || undefined,
-            weight: draftWeight ? String(draftWeight) : undefined,
-          },
+          properties: draftItemProps,
         });
       }
 
@@ -252,7 +254,7 @@ export default function CodexHomePage() {
       setDraftFeedback(
         err instanceof Error
           ? err.message
-          : 'Erro ao salvar rascunho na API.'
+          : 'Erro ao salvar registro na API.'
       );
     } finally {
       setIsSubmittingDraft(false);
@@ -473,7 +475,7 @@ export default function CodexHomePage() {
       {isAdmin && (
         <button
           onClick={handleOpenDraftModal}
-          aria-label="Criar rascunho rápido"
+          aria-label="Criar novo registro"
           className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#c8aa6e] bg-[#09090b] text-[#c8aa6e] shadow-[0_0_20px_rgba(200,170,110,0.4)] transition hover:bg-[#c8aa6e] hover:text-[#09090b] active:scale-95"
         >
           <span className="font-serif text-3xl leading-none">+</span>
@@ -552,14 +554,14 @@ export default function CodexHomePage() {
         </div>
       )}
 
-      {/* Modal Mobile-First de Criação Rápida (POST /entities, /locations, /items) */}
+      {/* Modal Completo de Criação (POST /entities, /locations, /items) */}
       {isDraftModalOpen && (
         <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/80 p-0 sm:p-4 backdrop-blur-xs">
-          <div className="w-full max-w-lg rounded-t-xl sm:rounded-md border-t sm:border border-[#c8aa6e]/60 bg-[#09090b] p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl rounded-t-xl sm:rounded-md border-t sm:border border-[#c8aa6e]/60 bg-[#09090b] p-5 shadow-2xl max-h-[92vh] overflow-y-auto">
             <div className="mb-4 flex items-center justify-between border-b border-[#c8aa6e]/20 pb-3">
               <div>
                 <span className="text-[10px] uppercase tracking-widest text-[#c8aa6e]">
-                  Cadastro Rápido Mobile (POST /{draftCategory})
+                  Cadastro do Mestre (POST /{draftCategory})
                 </span>
                 <h2 className="font-serif text-lg font-bold text-[#e4e4e7]">
                   Novo Registro de Lamúria
@@ -595,7 +597,7 @@ export default function CodexHomePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-[#c8aa6e] mb-1 font-serif">
-                    Nome
+                    Nome *
                   </label>
                   <input
                     type="text"
@@ -638,107 +640,9 @@ export default function CodexHomePage() {
                 </div>
               </div>
 
-              {/* Campos específicos de cada endpoint POST */}
-              {draftCategory === 'entities' && (
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#c8aa6e]">
-                      Armor Class
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="18"
-                      value={draftAc}
-                      onChange={(e) => setDraftAc(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#c8aa6e]">
-                      Hit Points
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="95 (10d10+40)"
-                      value={draftHp}
-                      onChange={(e) => setDraftHp(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#c8aa6e]">
-                      Challenge Rating
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="7"
-                      value={draftCr}
-                      onChange={(e) => setDraftCr(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {draftCategory === 'locations' && (
-                <div>
-                  <label className="block text-[10px] uppercase text-[#c8aa6e] mb-1">
-                    ID do Local Pai (parent_id opcional para criar sub-área)
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="Ex: 1 (deixe vazio se for local raiz)"
-                    value={draftParentId}
-                    onChange={(e) => setDraftParentId(e.target.value)}
-                    className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-3 py-2 text-xs"
-                  />
-                </div>
-              )}
-
-              {draftCategory === 'items' && (
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#c8aa6e]">
-                      Raridade
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Rare / Legendary"
-                      value={draftRarity}
-                      onChange={(e) => setDraftRarity(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#c8aa6e]">
-                      Dano
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="1d8 + 2"
-                      value={draftDamage}
-                      onChange={(e) => setDraftDamage(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#c8aa6e]">
-                      Peso (string)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="3.0 lb."
-                      value={draftWeight}
-                      onChange={(e) => setDraftWeight(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                </div>
-              )}
-
               <div>
                 <label className="block text-xs uppercase tracking-wider text-[#c8aa6e] mb-1 font-serif">
-                  Lore / Anotações Rápidas
+                  Lore / História
                 </label>
                 <textarea
                   rows={3}
@@ -749,10 +653,54 @@ export default function CodexHomePage() {
                 />
               </div>
 
-              <ImageUploader
-                value={draftImageUrl}
-                onChange={(url) => setDraftImageUrl(url)}
-              />
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-[#c8aa6e] mb-1 font-serif">
+                  URL da Imagem (ou use a câmera abaixo)
+                </label>
+                <input
+                  type="text"
+                  placeholder="https://..."
+                  value={draftImageUrl}
+                  onChange={(e) => setDraftImageUrl(e.target.value)}
+                  className="w-full rounded border border-[#c8aa6e]/40 bg-[#121216] px-3 py-2 text-xs text-[#e4e4e7] mb-2 focus:border-[#c8aa6e] focus:outline-none"
+                />
+                <ImageUploader
+                  value={draftImageUrl}
+                  onChange={(url) => setDraftImageUrl(url)}
+                />
+              </div>
+
+              {/* Campos completos para ENTITIES (MonsterStats + lista de Actions e Legendary Actions) */}
+              {draftCategory === 'entities' && (
+                <MonsterStatsForm
+                  value={draftStats}
+                  onChange={(newStats) => setDraftStats(newStats)}
+                />
+              )}
+
+              {/* Campos específicos para LOCATIONS */}
+              {draftCategory === 'locations' && (
+                <div className="rounded-md border border-[#c8aa6e]/30 bg-[#09090b]/80 p-4">
+                  <label className="block text-[10px] uppercase tracking-wider text-[#c8aa6e] mb-1 font-serif">
+                    ID do Local Pai (parent_id opcional para criar sub-área)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Ex: 1 (deixe vazio se for local raiz)"
+                    value={draftParentId}
+                    onChange={(e) => setDraftParentId(e.target.value)}
+                    className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-3 py-2 text-xs text-[#e4e4e7]"
+                  />
+                </div>
+              )}
+
+              {/* Campos completos para ITEMS (ItemProperties + lista de SpecialEffects) */}
+              {draftCategory === 'items' && (
+                <ItemPropertiesForm
+                  value={draftItemProps}
+                  onChange={(newProps) => setDraftItemProps(newProps)}
+                />
+              )}
 
               {draftFeedback && (
                 <p className="text-xs text-amber-400">{draftFeedback}</p>
@@ -771,7 +719,7 @@ export default function CodexHomePage() {
                   disabled={isSubmittingDraft}
                   className="w-2/3 rounded bg-[#c8aa6e] py-2.5 font-serif text-xs font-bold uppercase tracking-widest text-[#09090b] transition hover:bg-[#c8aa6e]/90 disabled:opacity-50"
                 >
-                  {isSubmittingDraft ? 'Inscrevendo...' : 'Salvar Rascunho'}
+                  {isSubmittingDraft ? 'Inscrevendo...' : 'Salvar Registro'}
                 </button>
               </div>
             </form>

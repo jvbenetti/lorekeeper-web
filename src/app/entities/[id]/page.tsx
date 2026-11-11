@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { lorekeeperApi } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import ImageUploader from '@/components/ImageUploader';
+import MonsterStatsForm from '@/components/MonsterStatsForm';
 import type {
   EntityResponse,
   EntityType,
@@ -14,7 +15,6 @@ import type {
 } from '@/types/api';
 
 const ENTITY_TYPES: EntityType[] = ['MONSTER', 'NPC', 'GOD', 'DEMIGOD'];
-const ATTRIBUTE_KEYS = ['STR', 'DEX', 'CON', 'INT', 'WIS', 'CHA'];
 
 export default function EntityDetailPage() {
   const params = useParams<{ id: string }>();
@@ -37,21 +37,7 @@ export default function EntityDetailPage() {
   const [editType, setEditType] = useState<EntityType>('MONSTER');
   const [editLore, setEditLore] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
-  const [editAc, setEditAc] = useState<string>('');
-  const [editHp, setEditHp] = useState('');
-  const [editSpeed, setEditSpeed] = useState('');
-  const [editCr, setEditCr] = useState('');
-  const [editAttrs, setEditAttrs] = useState<Record<string, number>>({
-    STR: 10,
-    DEX: 10,
-    CON: 10,
-    INT: 10,
-    WIS: 10,
-    CHA: 10,
-  });
-  const [editSkills, setEditSkills] = useState('');
-  const [editSenses, setEditSenses] = useState('');
-  const [editLanguages, setEditLanguages] = useState('');
+  const [editStats, setEditStats] = useState<MonsterStats>({});
   const [isSaving, setIsSaving] = useState(false);
 
   const loadEntity = useCallback(async () => {
@@ -89,22 +75,20 @@ export default function EntityDetailPage() {
     setEditType(entity.type);
     setEditLore(entity.lore || '');
     setEditImageUrl(entity.image_url || '');
-    const s = entity.stats || {};
-    setEditAc(s.armor_class !== undefined ? String(s.armor_class) : '');
-    setEditHp(s.hit_points || '');
-    setEditSpeed(s.speed || '');
-    setEditCr(s.challenge_rating || '');
-    setEditAttrs({
-      STR: s.attributes?.STR ?? 10,
-      DEX: s.attributes?.DEX ?? 10,
-      CON: s.attributes?.CON ?? 10,
-      INT: s.attributes?.INT ?? 10,
-      WIS: s.attributes?.WIS ?? 10,
-      CHA: s.attributes?.CHA ?? 10,
-    });
-    setEditSkills((s.skills || []).join(', '));
-    setEditSenses((s.senses || []).join(', '));
-    setEditLanguages((s.languages || []).join(', '));
+    setEditStats(
+      entity.stats || {
+        attributes: {
+          STR: 10,
+          DEX: 10,
+          CON: 10,
+          INT: 10,
+          WIS: 10,
+          CHA: 10,
+        },
+        actions: [],
+        legendary_actions: [],
+      }
+    );
     setIsEditOpen(true);
   };
 
@@ -114,31 +98,13 @@ export default function EntityDetailPage() {
     setIsSaving(true);
     setFeedback(null);
 
-    const updatedStats: MonsterStats = {
-      ...(entity.stats || {}),
-      armor_class: editAc ? Number(editAc) : undefined,
-      hit_points: editHp || undefined,
-      speed: editSpeed || undefined,
-      challenge_rating: editCr || undefined,
-      attributes: editAttrs,
-      skills: editSkills
-        ? editSkills.split(',').map((x) => x.trim()).filter(Boolean)
-        : undefined,
-      senses: editSenses
-        ? editSenses.split(',').map((x) => x.trim()).filter(Boolean)
-        : undefined,
-      languages: editLanguages
-        ? editLanguages.split(',').map((x) => x.trim()).filter(Boolean)
-        : undefined,
-    };
-
     try {
       await lorekeeperApi.updateEntity(entity.id, {
         name: editName.trim(),
         type: editType,
         lore: editLore,
         image_url: editImageUrl,
-        stats: updatedStats,
+        stats: editStats,
       });
       setIsEditOpen(false);
       setFeedback('Entidade atualizada com sucesso!');
@@ -592,7 +558,7 @@ export default function EntityDetailPage() {
       {/* Modal de Edição Completa (PUT /entities/:id) */}
       {isEditOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-md border border-[#c8aa6e] bg-[#09090b] p-6">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md border border-[#c8aa6e] bg-[#09090b] p-6">
             <div className="mb-4 flex items-center justify-between border-b border-[#c8aa6e]/20 pb-3">
               <h2 className="font-serif text-lg font-bold text-[#c8aa6e]">
                 Editar Entidade #{entity.id}
@@ -665,117 +631,10 @@ export default function EntityDetailPage() {
                 />
               </div>
 
-              <div className="border-t border-[#c8aa6e]/20 pt-3">
-                <span className="block font-serif text-xs uppercase tracking-wider text-[#c8aa6e] mb-2">
-                  MonsterStats
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Armor Class
-                    </label>
-                    <input
-                      type="number"
-                      value={editAc}
-                      onChange={(e) => setEditAc(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Hit Points
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="120 (16d8+48)"
-                      value={editHp}
-                      onChange={(e) => setEditHp(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Speed
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="9m, voo 18m"
-                      value={editSpeed}
-                      onChange={(e) => setEditSpeed(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Challenge Rating
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="10"
-                      value={editCr}
-                      onChange={(e) => setEditCr(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 sm:grid-cols-6 gap-2">
-                  {ATTRIBUTE_KEYS.map((key) => (
-                    <div key={key}>
-                      <label className="block text-[10px] font-bold text-[#c8aa6e]">
-                        {key}
-                      </label>
-                      <input
-                        type="number"
-                        value={editAttrs[key] ?? 10}
-                        onChange={(e) =>
-                          setEditAttrs((prev) => ({
-                            ...prev,
-                            [key]: Number(e.target.value),
-                          }))
-                        }
-                        className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1 text-xs"
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Perícias (separadas por vírgula)
-                    </label>
-                    <input
-                      type="text"
-                      value={editSkills}
-                      onChange={(e) => setEditSkills(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Sentidos (separados por vírgula)
-                    </label>
-                    <input
-                      type="text"
-                      value={editSenses}
-                      onChange={(e) => setEditSenses(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Idiomas (separados por vírgula)
-                    </label>
-                    <input
-                      type="text"
-                      value={editLanguages}
-                      onChange={(e) => setEditLanguages(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
+              <MonsterStatsForm
+                value={editStats}
+                onChange={(newStats) => setEditStats(newStats)}
+              />
 
               <div className="flex justify-end gap-2 pt-3">
                 <button

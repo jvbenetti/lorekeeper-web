@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { lorekeeperApi } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import ImageUploader from '@/components/ImageUploader';
+import ItemPropertiesForm from '@/components/ItemPropertiesForm';
 import type { ItemResponse, ItemType, ItemProperties } from '@/types/api';
 
 const ITEM_TYPES: ItemType[] = ['WEAPON', 'ARMOR', 'ARTIFACT', 'POTION'];
@@ -26,15 +27,7 @@ export default function ItemDetailPage() {
   const [editType, setEditType] = useState<ItemType>('WEAPON');
   const [editLore, setEditLore] = useState('');
   const [editImageUrl, setEditImageUrl] = useState('');
-  const [editRarity, setEditRarity] = useState('');
-  const [editWeaponType, setEditWeaponType] = useState('');
-  const [editSubtype, setEditSubtype] = useState('');
-  const [editDamage, setEditDamage] = useState('');
-  const [editDamageType, setEditDamageType] = useState('');
-  const [editWeight, setEditWeight] = useState('');
-  const [editMagicBonus, setEditMagicBonus] = useState('');
-  const [editAttunement, setEditAttunement] = useState(false);
-  const [editCurse, setEditCurse] = useState('');
+  const [editProps, setEditProps] = useState<ItemProperties>({});
   const [isSaving, setIsSaving] = useState(false);
 
   const loadItem = useCallback(async () => {
@@ -61,16 +54,7 @@ export default function ItemDetailPage() {
     setEditType(item.type);
     setEditLore(item.lore || '');
     setEditImageUrl(item.image_url || '');
-    const p = item.properties || {};
-    setEditRarity(p.rarity || '');
-    setEditWeaponType(p.weapon_type || '');
-    setEditSubtype(p.subtype || '');
-    setEditDamage(p.damage || '');
-    setEditDamageType(p.damage_type || '');
-    setEditWeight(p.weight || '');
-    setEditMagicBonus(p.magic_bonus || '');
-    setEditAttunement(Boolean(p.attunement_required));
-    setEditCurse(p.curse || '');
+    setEditProps(item.properties || {});
     setIsEditOpen(true);
   };
 
@@ -80,26 +64,13 @@ export default function ItemDetailPage() {
     setIsSaving(true);
     setFeedback(null);
 
-    const updatedProps: ItemProperties = {
-      ...(item.properties || {}),
-      rarity: editRarity || undefined,
-      weapon_type: editWeaponType || undefined,
-      subtype: editSubtype || undefined,
-      damage: editDamage || undefined,
-      damage_type: editDamageType || undefined,
-      weight: editWeight ? String(editWeight) : undefined,
-      magic_bonus: editMagicBonus || undefined,
-      attunement_required: editAttunement,
-      curse: editCurse || undefined,
-    };
-
     try {
       await lorekeeperApi.updateItem(item.id, {
         name: editName.trim(),
         type: editType,
         lore: editLore,
         image_url: editImageUrl,
-        properties: updatedProps,
+        properties: editProps,
       });
       setIsEditOpen(false);
       setFeedback('Item atualizado com sucesso!');
@@ -264,7 +235,7 @@ export default function ItemDetailPage() {
               </div>
               <div className="rounded border border-[#c8aa6e]/20 bg-[#09090b] p-3">
                 <span className="block text-[10px] uppercase text-[#c8aa6e]">
-                   Sintonização (Attunement)
+                  Sintonização (Attunement)
                 </span>
                 <span className="font-serif text-sm font-bold">
                   {props.attunement_required ? 'Requerida' : 'Não Requerida'}
@@ -376,7 +347,7 @@ export default function ItemDetailPage() {
       {/* Modal de Edição (PUT /items/:id) */}
       {isEditOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs">
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-md border border-[#c8aa6e] bg-[#09090b] p-6">
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md border border-[#c8aa6e] bg-[#09090b] p-6">
             <div className="mb-4 flex items-center justify-between border-b border-[#c8aa6e]/20 pb-3">
               <h2 className="font-serif text-lg font-bold text-[#c8aa6e]">
                 Editar Item #{item.id}
@@ -449,110 +420,10 @@ export default function ItemDetailPage() {
                 />
               </div>
 
-              <div className="border-t border-[#c8aa6e]/20 pt-3 space-y-3">
-                <span className="block font-serif text-xs uppercase tracking-wider text-[#c8aa6e]">
-                  ItemProperties
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Raridade
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Legendary"
-                      value={editRarity}
-                      onChange={(e) => setEditRarity(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Dano
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="2d6 + 3"
-                      value={editDamage}
-                      onChange={(e) => setEditDamage(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Tipo de Dano
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Slashing / Fire"
-                      value={editDamageType}
-                      onChange={(e) => setEditDamageType(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Peso (string ex: &quot;2.5 lb.&quot;)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="2.5 lb."
-                      value={editWeight}
-                      onChange={(e) => setEditWeight(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Bônus Mágico
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="+2"
-                      value={editMagicBonus}
-                      onChange={(e) => setEditMagicBonus(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                      Weapon Type / Subtype
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Martial / Longsword"
-                      value={editWeaponType}
-                      onChange={(e) => setEditWeaponType(e.target.value)}
-                      className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    id="attunement"
-                    type="checkbox"
-                    checked={editAttunement}
-                    onChange={(e) => setEditAttunement(e.target.checked)}
-                    className="accent-[#c8aa6e]"
-                  />
-                  <label htmlFor="attunement" className="text-xs text-[#e4e4e7]">
-                    Requer Sintonização (attunement_required)
-                  </label>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] uppercase text-[#e4e4e7]/70">
-                    Maldição (curse)
-                  </label>
-                  <input
-                    type="text"
-                    value={editCurse}
-                    onChange={(e) => setEditCurse(e.target.value)}
-                    className="w-full rounded border border-[#c8aa6e]/30 bg-[#121216] px-2 py-1.5 text-xs"
-                  />
-                </div>
-              </div>
+              <ItemPropertiesForm
+                value={editProps}
+                onChange={(newProps) => setEditProps(newProps)}
+              />
 
               <div className="flex justify-end gap-2 pt-3">
                 <button
