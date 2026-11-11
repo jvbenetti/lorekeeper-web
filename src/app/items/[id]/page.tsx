@@ -416,7 +416,7 @@ export default function ItemDetailPage() {
                 />
                 <ImageUploader
                   value={editImageUrl}
-                  onChange={(url) => setEditImageUrl(url)}
+                  onImageUploaded={(url) => setEditImageUrl(url)}
                 />
               </div>
 

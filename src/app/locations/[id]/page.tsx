@@ -593,7 +593,7 @@ export default function LocationDetailPage() {
                 />
                 <ImageUploader
                   value={editImageUrl}
-                  onChange={(url) => setEditImageUrl(url)}
+                  onImageUploaded={(url) => setEditImageUrl(url)}
                 />
               </div>
 

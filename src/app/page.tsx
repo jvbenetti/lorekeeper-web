@@ -666,7 +666,7 @@ export default function CodexHomePage() {
                 />
                 <ImageUploader
                   value={draftImageUrl}
-                  onChange={(url) => setDraftImageUrl(url)}
+                  onImageUploaded={(url) => setDraftImageUrl(url)}
                 />
               </div>
 
