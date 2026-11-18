@@ -277,7 +277,7 @@ export default function CodexHomePage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="block text-[10px] uppercase tracking-[0.25em] text-[#c8aa6e]">
-                Crônicas de Lamúria
+                Crônicas de Tērmina
               </span>
               <button
                 type="button"
