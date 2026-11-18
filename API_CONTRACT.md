@@ -8,8 +8,18 @@
 - **Local Base URL:** `http://localhost:8080/api/v1`
 - **Health Check URL:** `GET http://localhost:8080/health` (Público) -> `{ "status": "online", "world": "lorekeeper api" }`
 - **Auth Header (Rotas Admin 🔒):** `Authorization: Bearer <token>`
-- **Formato Padrão de Erro (`400`, `401`, `404`, `500`):** `{ "error": "string" }`
+- **Formato Padrão de Erro (`400`, `401`, `404`, `429`, `500`):** `{ "error": "string" }`
 - **Formato Padrão de Mensagem (`200` em ações/deletes):** `{ "message": "string" }`
+- **Proteções & Limites Globais:**
+    - **Body Limit:** `1MB` máximo por requisição.
+    - **Rate Limiting Geral (`/api/v1/*`):** `10 req/s` (burst de `30`) por IP -> retorna `429 Too Many Requests`.
+    - **Rate Limiting Login (`POST /api/v1/login`):** `5 req/min` (burst de `5`) por IP -> retorna `429 Too Many Requests`.
+    - **Validações de Campos:**
+        - `name`: Obrigatório na criação, não pode ser vazio, máximo `255` caracteres.
+        - `image_url`: Opcional, mas quando enviado deve ser uma URL `http`/`https` válida de no máximo `500` caracteres.
+        - `lore`: Opcional, máximo `50.000` caracteres.
+        - `stats` e `properties`: Validados de forma estrita (campos desconhecidos fora do schema retornam `400 Bad Request`).
+        - `search` / `rarity` (Query Params): Máximo `100` caracteres.
 
 ---
 
@@ -23,9 +33,12 @@
 ## 2. Endpoints
 
 ### Auth
-- **POST `/login`** (Público)
+- **POST `/login`** (Público - Rate Limited)
     - Request: `{ "username": "string", "password": "string" }`
-    - Response `200 OK`: `{ "token": "string" }` (válido por 72h)
+    - Response `200 OK`: `{ "token": "string" }` (válido por 12h, assinado com `HS256`)
+    - Response `400 Bad Request`: `{ "error": "Usuário e senha são obrigatórios" }`
+    - Response `401 Unauthorized`: `{ "error": "Credenciais incorretas" }`
+    - Response `429 Too Many Requests`: `{ "error": "Muitas tentativas de login. Aguarde um momento e tente novamente." }`
 
 ### Entities (Monstros, NPCs, Deuses, Semideuses)
 - **GET `/entities`** (Público)
