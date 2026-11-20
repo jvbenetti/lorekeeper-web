@@ -348,7 +348,7 @@ export default function CodexHomePage() {
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Pesquisar nos pergaminhos de Tērmina (?search=texto)..."
+                placeholder="Pesquisar nos pergaminhos de Tērmina"
                 className="w-full rounded-md border border-[#c8aa6e]/40 bg-[#121216] py-2.5 pl-10 pr-4 text-sm text-[#e4e4e7] placeholder-[#e4e4e7]/40 focus:border-[#c8aa6e] focus:outline-none focus:ring-1 focus:ring-[#c8aa6e]"
               />
             </div>
